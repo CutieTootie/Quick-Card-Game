@@ -10,8 +10,8 @@
   <header class="top">
     <h1>Quick Card Game</h1>
     <div class="scores">
-      <span class="score you"><span id="name-player">You</span> <b id="score-player">0</b></span>
-      <span class="score cpu"><span id="name-opponent">Computer</span> <b id="score-opponent">0</b></span>
+      <span class="score you"><span id="name-bottom">You</span> <b id="score-bottom">0</b></span>
+      <span class="score cpu"><span id="name-top">Computer</span> <b id="score-top">0</b></span>
     </div>
     <div class="actions">
       <label class="mode">Opponent
@@ -25,26 +25,43 @@
     </div>
   </header>
 
+  <div class="roombar" id="roombar" hidden>
+    <span>Room <b id="room-code"></b></span>
+    <button id="btn-leave" type="button">Leave room</button>
+  </div>
+
   <p id="status" class="status" role="status"></p>
 
-  <main class="table">
-    <section class="side opponent" aria-label="Opponent's zones">
-      <div class="row-label"><span class="who-opponent">Computer</span> back</div>
-      <div class="row" id="opponent-back"></div>
-      <div class="row-label"><span class="who-opponent">Computer</span> front</div>
-      <div class="row" id="opponent-front"></div>
+  <section class="lobby" id="lobby" hidden>
+    <h2>Play a friend online</h2>
+    <p>Create a room and send your friend the code, or type the code from your friend's room.</p>
+    <button id="btn-create" type="button">Create a room</button>
+    <form class="join" id="join-form">
+      <label for="join-code">Room code</label>
+      <input id="join-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
+      <button type="submit">Join</button>
+    </form>
+    <p class="lobby-msg" id="lobby-msg"></p>
+  </section>
+
+  <main class="table" id="table">
+    <section class="side opponent" aria-label="Top player's zones">
+      <div class="row-label"><span class="who-top">Computer</span> back</div>
+      <div class="row" id="top-back"></div>
+      <div class="row-label"><span class="who-top">Computer</span> front</div>
+      <div class="row" id="top-front"></div>
     </section>
 
     <div class="divider"><span>battle line</span></div>
 
-    <section class="side player" aria-label="Your zones">
-      <div class="row" id="player-front"></div>
-      <div class="row-label"><span class="who-player">Your</span> front</div>
-      <div class="row" id="player-back"></div>
-      <div class="row-label"><span class="who-player">Your</span> back</div>
+    <section class="side player" aria-label="Bottom player's zones">
+      <div class="row" id="bottom-front"></div>
+      <div class="row-label"><span class="who-bottom">Your</span> front</div>
+      <div class="row" id="bottom-back"></div>
+      <div class="row-label"><span class="who-bottom">Your</span> back</div>
     </section>
 
-    <section class="hand-area" aria-label="Your hand">
+    <section class="hand-area" aria-label="Hand">
       <div class="hand-head">
         <h2 id="hand-title">Your hand</h2>
         <span id="deck-count" class="muted"></span>
@@ -65,7 +82,7 @@
   <dialog id="rules">
     <h2>How to play</h2>
     <ol>
-      <li>You and your opponent (the computer, or a friend on the same device) take turns placing one card from your hand into one of your empty zones. You have 6 front zones and 6 back zones.</li>
+      <li>You and your opponent (the computer, or a friend) take turns placing one card from your hand into one of your empty zones. You have 6 front zones and 6 back zones.</li>
       <li>After you place a card you draw a new one.</li>
       <li>When all 24 zones are full, every card fights the opposing card in the same spot: front fights front, back fights back, column by column.</li>
       <li>The higher power wins that battle and scores 1 point. Equal power is a tie and nobody scores. Most points after 12 battles wins.</li>

@@ -18,6 +18,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -203,3 +204,38 @@ dialog h2 { margin-top: 0; }
 .zone.target.opp-target { border-color: var(--cpu); }
 .zone.target.opp-target .preview { color: var(--cpu); }
 .actions { flex-wrap: wrap; }
+
+.roombar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.roombar b { letter-spacing: .15em; font-size: 18px; color: var(--you); }
+
+.lobby {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.lobby h2 { margin: 0; font-size: 17px; }
+.lobby p { margin: 0; color: var(--muted); }
+.join { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.join label { font-size: 13px; color: var(--muted); }
+.join input {
+  font: inherit;
+  width: 6.5em;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  color: var(--text);
+  background: var(--zone);
+  border: 1px solid #3a3f4c;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.lobby .lobby-msg { color: var(--cpu); min-height: 1.4em; }
