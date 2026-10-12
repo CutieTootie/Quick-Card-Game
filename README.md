@@ -50,7 +50,7 @@ There are five elements: Fire, Earth, Metal, Water and Wood.
 
 These are easy to change, mostly as constants at the top of `game.js`:
 
-- **Card power:** every card has a random power from 1 to 9. Decks have 4 cards of each element.
+- **Card power:** every card starts at 2 power, so element bonuses decide most battles. Change `MIN_POWER` and `MAX_POWER` for random power. Decks have 4 cards of each element.
 - **Adjacent** means orthogonal neighbours on your own side: left, right, and the card directly in front of or behind it. Diagonals don't count.
 - **Who fights whom:** front cards fight the opposing front card in the same column, and back cards fight the opposing back card in the same column. The back row also boosts the front row through adjacency bonuses.
 - **Order of bonuses:** the +2 bonuses are added first, then the ×2 is applied. Both cards in a battle attack each other at the same time, so either one can get the ×2.

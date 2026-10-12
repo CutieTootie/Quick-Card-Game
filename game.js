@@ -7,8 +7,8 @@
   const ROWS = ['front', 'back'];
   const HAND_SIZE = 5;
   const DECK_SIZE = 20; // 4 of each element
-  const MIN_POWER = 1;
-  const MAX_POWER = 9;
+  const MIN_POWER = 2; // every card starts at 2; widen this range for random power
+  const MAX_POWER = 2;
   const ADJACENT_BONUS = 2;
   // Turn order: the first player places FIRST_TURN_CARDS, then players take
   // turns placing CARDS_PER_TURN each. The first player's last turn ends up
