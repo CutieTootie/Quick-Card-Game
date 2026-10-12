@@ -239,3 +239,16 @@ dialog h2 { margin-top: 0; }
   padding: 6px 8px;
 }
 .lobby .lobby-msg { color: var(--cpu); min-height: 1.4em; }
+.open-rooms { display: grid; gap: 8px; width: 100%; }
+.open-rooms h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+.open-room {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--zone);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.open-room b { letter-spacing: .15em; color: var(--you); }
+button:disabled { opacity: .5; cursor: default; }

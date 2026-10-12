@@ -34,7 +34,7 @@
 
   <section class="lobby" id="lobby" hidden>
     <h2>Play a friend online</h2>
-    <p>Create a room and send your friend the code, or type the code from your friend's room.</p>
+    <p>One of you creates a room. The other picks it from the list below, or types its code.</p>
     <button id="btn-create" type="button">Create a room</button>
     <form class="join" id="join-form">
       <label for="join-code">Room code</label>
@@ -42,6 +42,7 @@
       <button type="submit">Join</button>
     </form>
     <p class="lobby-msg" id="lobby-msg"></p>
+    <div class="open-rooms" id="open-rooms" hidden></div>
   </section>
 
   <main class="table" id="table">

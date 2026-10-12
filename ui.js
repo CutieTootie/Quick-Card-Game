@@ -18,7 +18,12 @@
   let handHidden = false; // in local mode, the hand stays covered until the next player taps
 
   // Online state. `db` is null when this page isn't running somewhere that offers shared storage.
-  const online = { db: null, ref: null, unsub: null, code: null, seat: null, seats: null, round: 0, foughtRound: 0 };
+  const online = {
+    db: null, ref: null, unsub: null, code: null, seat: null, seats: null, round: 0, foughtRound: 0,
+    status: 'off', // 'off' (not inside Claude), 'connecting', 'ready', 'unavailable', 'read-only'
+    roomsUnsub: null, openRooms: [],
+  };
+  const OPEN_ROOM_MAX_AGE = 30 * 60 * 1000;
   const clientId = loadClientId();
 
   const $ = (id) => document.getElementById(id);
@@ -301,14 +306,67 @@
   function showLobby(msg) {
     $('lobby-msg').textContent = msg || '';
     setStatus('');
+    watchOpenRooms();
+    renderLobby();
     render();
   }
 
-  function writeError(e) {
-    if (e && e.code === 'invalid_argument') {
-      return "You can't save moves in this game. Ask the person who shared it to invite you as an Editor.";
+  const NO_ACCESS = "You can't play online on this link yet. Ask the person who shared it to give you Editor access, then reload the page.";
+
+  function renderLobby() {
+    const ready = online.status === 'ready';
+    $('btn-create').disabled = !ready;
+    $('join-code').disabled = !ready;
+    $('join-form').querySelector('button').disabled = !ready;
+    const info = {
+      connecting: 'Connecting…',
+      unavailable: "Online play isn't working on this device. Make sure you're signed in to Claude and opened the shared link, then reload the page.",
+      'read-only': NO_ACCESS,
+    }[online.status];
+    if (info) $('lobby-msg').textContent = info;
+
+    const list = $('open-rooms');
+    const rooms = ready ? online.openRooms : [];
+    list.hidden = rooms.length === 0;
+    list.innerHTML = rooms.length ? '<h3>Rooms waiting for a player</h3>' : '';
+    for (const r of rooms) {
+      const mins = Math.max(0, Math.round((Date.now() - r.updatedAt) / 60000));
+      const row = document.createElement('div');
+      row.className = 'open-room';
+      row.innerHTML = `<span><b>${r.code}</b> <span class="muted">made ${mins ? mins + ' min ago' : 'just now'}</span></span>`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Join';
+      btn.addEventListener('click', () => joinRoom(r.code));
+      row.appendChild(btn);
+      list.appendChild(row);
     }
-    return 'Something went wrong talking to the game. Please try again.';
+  }
+
+  // Live list of rooms someone else made that still need a second player.
+  function watchOpenRooms() {
+    if (online.roomsUnsub || online.status !== 'ready') return;
+    try {
+      online.roomsUnsub = online.db.collection('games').orderBy('updatedAt', 'desc').limit(20).onSnapshot((snap) => {
+        online.openRooms = snap.docs
+          .map((d) => d.data())
+          .filter((r) => r && r.seats && !r.seats.opponent && r.seats.player !== clientId && Date.now() - (r.updatedAt || 0) < OPEN_ROOM_MAX_AGE);
+        if (mode === 'online' && !online.ref) renderLobby();
+      }, () => { online.roomsUnsub = null; });
+    } catch (e) {
+      online.roomsUnsub = null;
+    }
+  }
+
+  function stopWatchingRooms() {
+    if (online.roomsUnsub) online.roomsUnsub();
+    online.roomsUnsub = null;
+  }
+
+  function writeError(e) {
+    const code = e && e.code ? ` (${e.code})` : '';
+    if (e && (e.code === 'invalid_argument' || e.code === 'not_granted' || e.code === 'revoked')) return NO_ACCESS + code;
+    return `Something went wrong talking to the game. Please try again.${code}`;
   }
 
   async function pushState() {
@@ -359,7 +417,7 @@
     try {
       const ref = online.db.doc(`games/${code}`);
       const snap = await ref.get();
-      if (!snap.exists) return showLobby(`There's no room with the code ${code}.`);
+      if (!snap.exists) return showLobby(`There's no room with the code ${code}. Check the code, or pick the room from the list.`);
       const seats = snap.data().seats || {};
       let seat;
       if (seats.player === clientId) seat = 'player';
@@ -381,6 +439,7 @@
     online.round = 0;
     online.foughtRound = 0;
     $('lobby-msg').textContent = '';
+    stopWatchingRooms();
     if (online.unsub) online.unsub();
     online.unsub = ref.onSnapshot(onRoomSnapshot, () => {
       leaveRoom();
@@ -432,22 +491,40 @@
 
   function leaveRoom() {
     if (online.unsub) online.unsub();
+    // Close a room you made that nobody joined, so it stops showing in the list.
+    if (online.ref && online.seat === 'player' && online.seats && !online.seats.opponent) {
+      online.ref.delete().catch(() => {});
+    }
     Object.assign(online, { ref: null, unsub: null, code: null, seat: null, seats: null, round: 0, foughtRound: 0 });
     resetView();
   }
 
   async function detectOnline() {
     if (!window.claude || typeof window.claude.use !== 'function') return;
+    // Inside Claude: offer the option right away and explain in the lobby if it can't work.
+    const opt = document.createElement('option');
+    opt.value = 'online';
+    opt.textContent = 'Friend (online)';
+    $('mode').appendChild(opt);
+    online.status = 'connecting';
     try {
       online.db = await window.claude.use('db');
     } catch (e) {
       online.db = null;
     }
-    if (!online.db) return;
-    const opt = document.createElement('option');
-    opt.value = 'online';
-    opt.textContent = 'Friend (online)';
-    $('mode').appendChild(opt);
+    if (!online.db) {
+      online.status = 'unavailable';
+    } else {
+      let canWrite = null;
+      try {
+        const user = await window.claude.use('user');
+        if (user) canWrite = await user.can('data.write');
+      } catch (e) {
+        canWrite = null;
+      }
+      online.status = canWrite === false ? 'read-only' : 'ready';
+    }
+    if (mode === 'online' && !online.ref) showLobby();
   }
 
   // ---- Wiring ----
@@ -470,6 +547,7 @@
   $('mode').addEventListener('change', (e) => {
     if (busy && mode !== 'online') { e.target.value = mode; return; }
     leaveRoom();
+    stopWatchingRooms();
     mode = e.target.value;
     if (mode === 'online') showLobby();
     else start();
