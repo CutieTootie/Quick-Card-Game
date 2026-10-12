@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quick Card Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Quick Card Game</h1>
+    <div class="scores">
+      <span class="score you">You <b id="score-player">0</b></span>
+      <span class="score cpu">Computer <b id="score-opponent">0</b></span>
+    </div>
+    <div class="actions">
+      <button id="btn-rules" type="button">Rules</button>
+      <button id="btn-new" type="button">New game</button>
+    </div>
+  </header>
+
+  <p id="status" class="status" role="status"></p>
+
+  <main class="table">
+    <section class="side opponent" aria-label="Computer's zones">
+      <div class="row-label">Computer back</div>
+      <div class="row" id="opponent-back"></div>
+      <div class="row-label">Computer front</div>
+      <div class="row" id="opponent-front"></div>
+    </section>
+
+    <div class="divider"><span>battle line</span></div>
+
+    <section class="side player" aria-label="Your zones">
+      <div class="row" id="player-front"></div>
+      <div class="row-label">Your front</div>
+      <div class="row" id="player-back"></div>
+      <div class="row-label">Your back</div>
+    </section>
+
+    <section class="hand-area" aria-label="Your hand">
+      <div class="hand-head">
+        <h2>Your hand</h2>
+        <span id="deck-count" class="muted"></span>
+      </div>
+      <div class="hand" id="hand"></div>
+    </section>
+  </main>
+
+  <aside class="legend" aria-label="Element cheat sheet">
+    <div><b>+2 next to:</b> <span id="legend-fed"></span></div>
+    <div><b>×2 attacking:</b> <span id="legend-beats"></span></div>
+  </aside>
+
+  <dialog id="rules">
+    <h2>How to play</h2>
+    <ol>
+      <li>You and the computer take turns placing one card from your hand into one of your empty zones. You have 6 front zones and 6 back zones.</li>
+      <li>After you place a card you draw a new one.</li>
+      <li>When all 24 zones are full, every card fights the opposing card in the same spot: front fights front, back fights back, column by column.</li>
+      <li>The higher power wins that battle and scores 1 point. Equal power is a tie and nobody scores. Most points after 12 battles wins.</li>
+    </ol>
+    <h3>Element bonuses</h3>
+    <p>A card gets <b>+2</b> for every card touching it on your side (left, right, and the card directly in front of or behind it) of the element that feeds it:</p>
+    <ul id="rules-fed"></ul>
+    <p>A card's power is <b>doubled</b> when it attacks the element it beats. Bonuses are added first, then doubled:</p>
+    <ul id="rules-beats"></ul>
+    <form method="dialog"><button type="submit">Got it</button></form>
+  </dialog>
+
+  <script src="game.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
