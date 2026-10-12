@@ -60,6 +60,8 @@ These are easy to change, mostly as constants at the top of `game.js`:
 
 ## Files
 
+- `godot/`: the same game rebuilt for Godot 4.7.2, with Steam play. See `godot/README.md`.
+
 - `index.html`, `style.css`, `ui.js` — the page and its interface.
 - `game.js` — the rules and the computer opponent, with no browser code.
 - `test/rules.test.js` — rules tests. Run with `node test/rules.test.js`.
