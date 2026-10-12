@@ -188,3 +188,18 @@ dialog h2 { margin-top: 0; }
 
 .big-result { font-size: 18px; }
 .big-result button { margin-left: 10px; }
+
+.mode { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.mode select {
+  font: inherit;
+  color: var(--text);
+  background: var(--zone);
+  border: 1px solid #3a3f4c;
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+.pass { text-align: center; padding: 16px 8px; }
+.pass p { margin: 0 0 10px; font-weight: 600; }
+.zone.target.opp-target { border-color: var(--cpu); }
+.zone.target.opp-target .preview { color: var(--cpu); }
+.actions { flex-wrap: wrap; }

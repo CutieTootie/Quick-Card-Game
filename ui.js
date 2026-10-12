@@ -6,15 +6,36 @@
   const AI_DELAY = 550;
   const BATTLE_DELAY = 380;
 
+  // 'cpu' = play the computer. 'local' = two people pass one device back and forth.
+  const MODES = {
+    cpu: { player: 'You', opponent: 'Computer', playerRows: 'Your', opponentRows: 'Computer' },
+    local: { player: 'Player 1', opponent: 'Player 2', playerRows: 'Player 1', opponentRows: 'Player 2' },
+  };
+
   const $ = (id) => document.getElementById(id);
   const statusEl = $('status');
   const handEl = $('hand');
 
+  let mode = 'cpu';
   let game;
   let selectedId = null;
   let lastPlaced = null; // "side-row-col" for the drop animation
   let results = null; // battle results once combat has started
   let busy = false;
+  let handHidden = false; // in local mode, the hand stays covered until the next player taps
+
+  const names = () => MODES[mode];
+  const isHuman = (side) => mode === 'local' || side === 'player';
+
+  // Whose hand is shown: the side whose turn it is, if a person controls it.
+  function handSide() {
+    if (game.turn === 'opponent' && mode === 'local') return 'opponent';
+    return 'player';
+  }
+
+  function canAct(side) {
+    return !busy && !handHidden && game.turn === side && isHuman(side);
+  }
 
   function elTag(el) {
     return `<span class="el-tag" style="color:var(--${el})">${ICONS[el]} ${el}</span>`;
@@ -53,14 +74,15 @@
       }
       z.innerHTML = cardHtml(card, extra);
       if (lastPlaced === `${side}-${row}-${col}`) z.classList.add('just-placed');
-    } else if (side === 'player' && selectedId !== null && game.turn === 'player' && !busy) {
+    } else if (selectedId !== null && canAct(side)) {
       z.classList.add('target');
+      if (side === 'opponent') z.classList.add('opp-target');
       // Preview the power the selected card would have here.
-      const card = game.player.hand.find((c) => c.id === selectedId);
+      const card = game[side].hand.find((c) => c.id === selectedId);
       const trial = { front: board.front.slice(), back: board.back.slice() };
       trial[row][col] = card;
       z.innerHTML = `<span class="preview">${G.boardPower(trial, row, col)}</span>`;
-      z.addEventListener('click', () => playerPlace(row, col));
+      z.addEventListener('click', () => place(side, row, col));
     }
     return z;
   }
@@ -76,18 +98,40 @@
   }
 
   function renderHand() {
-    handEl.innerHTML = game.player.hand.map((c) => cardHtml(c)).join('');
-    handEl.classList.toggle('disabled', game.turn !== 'player' || busy);
+    const side = handSide();
+    const n = names();
+    const owner = mode === 'cpu' ? 'Your' : `${n[side]}'s`;
+    $('hand-title').textContent = `${owner} hand`;
+    $('deck-count').textContent = `${game[side].deck.length} cards left in deck`;
+
+    const covered = handHidden && game.turn !== 'done';
+    $('pass').hidden = !covered;
+    handEl.hidden = covered;
+    if (covered) {
+      $('pass-text').textContent = `Pass the device to ${n[game.turn]}.`;
+      handEl.innerHTML = '';
+      return;
+    }
+
+    handEl.innerHTML = game[side].hand.map((c) => cardHtml(c)).join('');
+    handEl.classList.toggle('disabled', !canAct(side));
     for (const el of handEl.querySelectorAll('.card')) {
       const id = Number(el.dataset.id);
       if (id === selectedId) el.classList.add('selected');
       el.addEventListener('click', () => {
-        if (game.turn !== 'player' || busy) return;
+        if (!canAct(side)) return;
         selectedId = selectedId === id ? null : id;
         render();
       });
     }
-    $('deck-count').textContent = `${game.player.deck.length} cards left in deck`;
+  }
+
+  function renderNames() {
+    const n = names();
+    $('name-player').textContent = n.player;
+    $('name-opponent').textContent = n.opponent;
+    for (const el of document.querySelectorAll('.who-player')) el.textContent = n.playerRows;
+    for (const el of document.querySelectorAll('.who-opponent')) el.textContent = n.opponentRows;
   }
 
   function renderScore() {
@@ -97,6 +141,7 @@
   }
 
   function render() {
+    renderNames();
     renderBoard();
     renderHand();
     renderScore();
@@ -106,19 +151,22 @@
     statusEl.innerHTML = html;
   }
 
-  function playerPlace(row, col) {
-    if (busy || game.turn !== 'player' || selectedId === null) return;
-    if (!G.placeCard(game, 'player', selectedId, row, col)) return;
-    lastPlaced = `player-${row}-${col}`;
+  function place(side, row, col) {
+    if (!canAct(side) || selectedId === null) return;
+    if (!G.placeCard(game, side, selectedId, row, col)) return;
+    lastPlaced = `${side}-${row}-${col}`;
     selectedId = null;
+    // Cover the hand when the device has to change hands.
+    if (mode === 'local' && game.turn !== side && game.turn !== 'done') handHidden = true;
     afterMove();
   }
 
   function afterMove() {
+    const n = names();
     if (game.turn === 'done') {
       render();
       startCombat();
-    } else if (game.turn === 'opponent') {
+    } else if (!isHuman(game.turn)) {
       busy = true;
       setStatus('Computer is thinking…');
       render();
@@ -129,8 +177,15 @@
         busy = false;
         afterMove();
       }, AI_DELAY);
-    } else {
+    } else if (handHidden) {
+      setStatus(`${n[game.turn]}'s turn.`);
+      render();
+    } else if (mode === 'cpu') {
       setStatus('Your turn: pick a card from your hand, then an empty zone.');
+      render();
+    } else {
+      const where = game.turn === 'player' ? 'bottom' : 'top';
+      setStatus(`${n[game.turn]}'s turn: pick a card, then an empty zone on the ${where} half.`);
       render();
     }
   }
@@ -159,10 +214,16 @@
 
   function finish(score) {
     busy = false;
+    const n = names();
     let msg;
-    if (score.player > score.opponent) msg = `You win ${score.player} to ${score.opponent}! 🎉`;
-    else if (score.player < score.opponent) msg = `Computer wins ${score.opponent} to ${score.player}.`;
-    else msg = `It's a draw, ${score.player} to ${score.opponent}.`;
+    if (score.player === score.opponent) msg = `It's a draw, ${score.player} to ${score.opponent}.`;
+    else if (mode === 'cpu' && score.player > score.opponent) msg = `You win ${score.player} to ${score.opponent}! 🎉`;
+    else if (mode === 'cpu') msg = `Computer wins ${score.opponent} to ${score.player}.`;
+    else {
+      const w = score.player > score.opponent ? 'player' : 'opponent';
+      const l = w === 'player' ? 'opponent' : 'player';
+      msg = `${n[w]} wins ${score[w]} to ${score[l]}! 🎉`;
+    }
     setStatus(`<span class="big-result">${msg} <button id="btn-again" type="button">Play again</button></span>`);
     $('btn-again').addEventListener('click', start);
     render();
@@ -174,6 +235,7 @@
     lastPlaced = null;
     results = null;
     busy = false;
+    handHidden = false;
     afterMove();
   }
 
@@ -188,6 +250,15 @@
 
   $('btn-new').addEventListener('click', () => { if (!busy) start(); });
   $('btn-rules').addEventListener('click', () => $('rules').showModal());
+  $('btn-show').addEventListener('click', () => {
+    handHidden = false;
+    afterMove();
+  });
+  $('mode').addEventListener('change', (e) => {
+    if (busy) { e.target.value = mode; return; }
+    mode = e.target.value;
+    start();
+  });
 
   fillRules();
   start();
