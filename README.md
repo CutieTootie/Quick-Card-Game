@@ -17,8 +17,8 @@ Online play only shows up when the game is opened as a Claude artifact, because 
 
 ## How it plays
 
-1. You and your opponent take turns placing one card from your hand into one of your empty zones. Each side has **6 front zones** and **6 back zones**. You go first.
-2. After placing a card you draw a new one. Each player has a 20-card deck and a 5-card hand.
+1. You and your opponent take turns placing cards from your hand into your empty zones. Each side has **6 front zones** and **6 back zones**. You go first and place 1 card. After that each turn is 2 cards, and your last turn is 1 card, so the order is 1, 2, 2, …, 2, 1.
+2. After placing each card you draw a new one. Each player has a 20-card deck and a 5-card hand.
 3. When all 24 zones are full, the cards fight. Each card fights the opposing card in the same spot: front vs front and back vs back, column by column, so there are 12 battles.
 4. The higher power wins the battle and scores **1 point**. Most points wins.
 
@@ -55,7 +55,7 @@ These are easy to change, mostly as constants at the top of `game.js`:
 - **Who fights whom:** front cards fight the opposing front card in the same column, and back cards fight the opposing back card in the same column. The back row also boosts the front row through adjacency bonuses.
 - **Order of bonuses:** the +2 bonuses are added first, then the ×2 is applied. Both cards in a battle attack each other at the same time, so either one can get the ×2.
 - **Ties:** equal power is a tie and nobody scores.
-- **Turn order:** you (or Player 1) always go first. Placed cards are face up.
+- **Turn order:** you (or Player 1) always go first. The order is 1, 2, 2, …, 2, 1 (set by `FIRST_TURN_CARDS` and `CARDS_PER_TURN`). Placed cards are face up.
 - **Computer opponent:** it tries every card in every empty zone and picks the move that looks best right now.
 
 ## Files

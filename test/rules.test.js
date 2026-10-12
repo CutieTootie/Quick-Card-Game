@@ -50,4 +50,21 @@ for (let n = 0; n < 50; n++) {
   assert.ok(res.score.player + res.score.opponent <= 12);
 }
 
+// Turn order is 1, 2, 2, ..., 2, 1 (player goes first).
+{
+  const g = G.newGame();
+  const seq = [];
+  while (g.turn !== 'done') {
+    const side = g.turn;
+    let n = 0;
+    while (g.turn === side) {
+      const m = G.chooseMove(g, side);
+      G.placeCard(g, side, m.cardId, m.row, m.col);
+      n++;
+    }
+    seq.push(side[0] + n);
+  }
+  assert.strictEqual(seq.join(' '), 'p1 o2 p2 o2 p2 o2 p2 o2 p2 o2 p2 o2 p1');
+}
+
 console.log('All rules tests passed');

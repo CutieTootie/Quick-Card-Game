@@ -212,6 +212,11 @@
     afterMove();
   }
 
+  function cardsLeft() {
+    const n = game.movesLeft || 1;
+    return n === 1 ? 'place 1 card' : `place ${n} cards`;
+  }
+
   function afterMove() {
     if (game.turn === 'done') {
       render();
@@ -229,18 +234,18 @@
       }, AI_DELAY);
     } else if (mode === 'online') {
       if (!bothSeated()) setStatus(`Send your friend the room code <b>${online.code}</b>. Waiting for them to join…`);
-      else if (game.turn === online.seat) setStatus('Your turn: pick a card from your hand, then an empty zone.');
+      else if (game.turn === online.seat) setStatus(`Your turn: ${cardsLeft()}. Pick a card from your hand, then an empty zone.`);
       else setStatus('Waiting for your friend to play…');
       render();
     } else if (handHidden) {
-      setStatus(`${label(game.turn)}'s turn.`);
+      setStatus(`${label(game.turn)}'s turn: ${cardsLeft()}.`);
       render();
     } else if (mode === 'cpu') {
-      setStatus('Your turn: pick a card from your hand, then an empty zone.');
+      setStatus(`Your turn: ${cardsLeft()}. Pick a card from your hand, then an empty zone.`);
       render();
     } else {
       const where = game.turn === 'player' ? 'bottom' : 'top';
-      setStatus(`${label(game.turn)}'s turn: pick a card, then an empty zone on the ${where} half.`);
+      setStatus(`${label(game.turn)}'s turn: ${cardsLeft()}. Pick a card, then an empty zone on the ${where} half.`);
       render();
     }
   }

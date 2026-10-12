@@ -10,6 +10,11 @@
   const MIN_POWER = 1;
   const MAX_POWER = 9;
   const ADJACENT_BONUS = 2;
+  // Turn order: the first player places FIRST_TURN_CARDS, then players take
+  // turns placing CARDS_PER_TURN each. The first player's last turn ends up
+  // as a single card, so the order is 1, 2, 2, ..., 2, 1.
+  const FIRST_TURN_CARDS = 1;
+  const CARDS_PER_TURN = 2;
 
   // An element gets +2 for every adjacent friendly card of the element listed here.
   const FED_BY = {
@@ -134,6 +139,7 @@
       player: { deck: makeDeck(rng), hand: [], board: emptyBoard() },
       opponent: { deck: makeDeck(rng), hand: [], board: emptyBoard() },
       turn: 'player',
+      movesLeft: FIRST_TURN_CARDS, // cards the current player still places this turn
     };
     for (const side of ['player', 'opponent']) {
       for (let i = 0; i < HAND_SIZE; i++) g[side].hand.push(g[side].deck.pop());
@@ -149,8 +155,17 @@
     s.board[row][col] = s.hand.splice(idx, 1)[0];
     if (s.deck.length) s.hand.push(s.deck.pop());
     const other = side === 'player' ? 'opponent' : 'player';
-    game.turn = isFull(game[other].board) ? side : other;
-    if (isFull(game.player.board) && isFull(game.opponent.board)) game.turn = 'done';
+    game.movesLeft = (game.movesLeft || 1) - 1;
+    if (isFull(game.player.board) && isFull(game.opponent.board)) {
+      game.turn = 'done';
+      game.movesLeft = 0;
+    } else if (game.movesLeft > 0 && !isFull(s.board)) {
+      // Same player keeps going.
+    } else {
+      const next = isFull(game[other].board) ? side : other;
+      game.turn = next;
+      game.movesLeft = Math.min(CARDS_PER_TURN, emptySlots(game[next].board).length);
+    }
     return true;
   }
 
@@ -200,7 +215,7 @@
   }
 
   const api = {
-    ELEMENTS, COLS, ROWS, HAND_SIZE, FED_BY, BEATS, ADJACENT_BONUS,
+    ELEMENTS, COLS, ROWS, HAND_SIZE, FED_BY, BEATS, ADJACENT_BONUS, FIRST_TURN_CARDS, CARDS_PER_TURN,
     makeDeck, emptyBoard, neighbours, adjacencyBonus, boardPower, attackPower,
     isFull, emptySlots, resolveBattle, resolveAll, newGame, placeCard, chooseMove,
     makeCard,
